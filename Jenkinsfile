@@ -1,5 +1,5 @@
 pipeline {
-    agent {
+    agent any {
         docker {
             image 'node:20.9.0-alpine3.18'
             args '-p 3000:3000'
@@ -29,15 +29,55 @@ pipeline {
 			}
 		}
 
-		stage('OWASP DependencyCheck') {
-			steps {
-				dependencyCheck additionalArguments: '--format HTML --format XML', odcInstallation: 'OWASP Dependency-Check Vulnerabilities'
-			}
-		}
+		stage('OWASP Dependency-Check Vulnerabilities') {
+            steps {
+                script {
+                    dependencyCheck additionalArguments: ''' 
+                        -o './'
+                        -s './'
+                        -f 'ALL' 
+                        --prettyPrint''', odcInstallation: 'OWASP Dependency-Check Vulnerabilities'
+
+                    // Assuming dependency-check-report.xml is the output file from Dependency-Check
+                    archiveArtifacts artifacts: 'dependency-check-report.xml', fingerprint: true
+                }
+            }
+        }
     }
     post {
 		success {
 			dependencyCheckPublisher pattern: 'dependency-check-report.xml'
 		}
 	}
+}
+
+pipeline {
+    agent any
+    stages {
+        stage('Checkout SCM') {
+            steps {
+                git '/home/Desktop/3x03_SSD/JenkinsDependencyCheckTest'
+            }
+        }
+
+        stage('OWASP Dependency-Check Vulnerabilities') {
+            steps {
+                script {
+                    dependencyCheck additionalArguments: ''' 
+                        -o './'
+                        -s './'
+                        -f 'ALL' 
+                        --prettyPrint''', odcInstallation: 'OWASP Dependency-Check Vulnerabilities'
+
+                    // Assuming dependency-check-report.xml is the output file from Dependency-Check
+                    archiveArtifacts artifacts: 'dependency-check-report.xml', fingerprint: true
+                }
+            }
+        }
+    }   
+    post {
+        success {
+            dependencyCheckPublisher pattern: 'dependency-check-report.xml'
+        }
+    }
 }
