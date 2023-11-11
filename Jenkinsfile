@@ -25,7 +25,7 @@ pipeline {
         }
         stage('Checkout SCM') {
 			steps {
-				git '/home/JenkinsDependencyCheckTest'
+				git '/home/OneDrive/Documents/GitHub/simple-node-js-react-npm-app'
 			}
 		}
 
